@@ -3,7 +3,7 @@ use blake2b_rs::{Blake2b, Blake2bBuilder};
 
 const BLAKE2B_KEY: &[u8] = &[];
 const BLAKE2B_LEN: usize = 32;
-const PERSONALIZATION: &[u8] = b"sparsemerkletree";
+const PERSONALIZATION: &[u8] = b"ckb-default-hash";
 
 pub struct Blake2bHasher(Blake2b);
 
