@@ -179,6 +179,33 @@ fn test_to_dump_proof() {
 }
 
 #[test]
+fn test_to_dump_not_existing_proof() {
+    let not_existing: H256 = [0; 32].into();
+    let existing: H256 = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0].into();
+
+    let key1 : H256 = [11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0].into();
+    let key2 : H256 = [22, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0].into();
+    let pairs = vec![(key1, existing), (key2, existing)];
+
+    let not_existing_key = [2, 184,141,45,152,205,241,253,130,123,22,22,120,131,153,185,150,222,107,17,248, 0, 0, 0, 0,0,0,0,0,0,0,0].into();
+
+    let not_existing_pairs = vec![(not_existing_key, not_existing)];
+
+    let smt = new_smt(pairs.clone());
+    let root = smt.root();
+    println!("root = {:?}", root);
+
+    let proof = smt.merkle_proof(not_existing_pairs.clone().into_iter().map(|(k,_)| k).collect()).expect("gen proof");
+    let compiled_proof = proof.clone().compile(vec![(not_existing_key, not_existing)]).expect("compile proof");
+    println!("proof = {:?}", compiled_proof.0);
+    assert!(compiled_proof.verify::<Blake2bHasher>(smt.root(), vec![(not_existing_key, not_existing)]).expect("verify compiled proof"));
+}
+
+
+#[test]
 fn test_to_dump_input_proof() {
     let not_existing: H256 = [0; 32].into();
     let existing: H256 = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -212,10 +239,9 @@ fn test_to_dump_output_proof() {
     let existing: H256 = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0].into();
 
-    let key1 : H256 = [11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    let key1 : H256 = [1, 11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0].into();
-    let key2 : H256 = [22, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0].into();
+    let key2 : H256 = [0, 184,141,45,152,205,241,253,130,123,22,22,120,131,153,185,150,222,107,17,248, 0, 0, 0, 0,0,0,0,0,0,0,0].into();
 
     println!("key2 = {:?}", key2);
 
@@ -296,6 +322,31 @@ fn test_for_black_list() {
     assert!(compiled_proof.verify::<Blake2bHasher>(smt.root(), vec![(key1, H256::zero()), (key2, H256::zero())]).expect("verify compiled proof"));
 }
 
+#[test]
+fn test_for_replay(){
+    let key1: H256 = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0].into();
+    let key2 : H256 = [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0].into();
+    let key3: H256 = [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0].into();
+    let key4 : H256 = [4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0].into();
+
+    let existing: H256 = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0].into();
+    let non_existing: H256 = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0].into();
+    let pairs = vec![(key1, existing), (key2, non_existing),(key3, non_existing),(key4, non_existing)];
+    let smt = new_smt(pairs.clone());
+    let leaf_a_bl = vec![(key1, H256::zero())];
+    let leaf_c = vec![pairs[2]];
+    let proofc = smt.merkle_proof(leaf_c.clone().into_iter().map(|(k,_)| k).collect()).expect("gen proof");
+    let compiled_proof = proofc.clone().compile(leaf_c.clone()).expect("compile proof");
+    println!("proof = {:?}", compiled_proof.0);
+    assert!(compiled_proof.verify::<Blake2bHasher>(smt.root(),leaf_a_bl).expect("verify compiled proof"));
+    assert!(compiled_proof.verify::<Blake2bHasher>(smt.root(),leaf_c).expect("verify compiled proof"));
+}
 
 #[test]
 fn test_for_black_list2() {
